@@ -1,0 +1,19 @@
+#Build the Docker image and then push the image in the aws elastic container registry repo.
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - cd myproject
+      - $(aws ecr get-login-password --region ap-south-1 --no-include-email)       #login into ecr repo
+      - REPOSITORY_URI={AWS_ACC_ID.dkr.ecr.ap-south-1.amazonaws.com/my-images}      #ECR repo URI
+  build:
+    commands:
+      - docker build -t AWS_ACC_ID.dkr.ecr.ap-south-1.amazonaws.com/my-images:latest . #Dockerfile present in current dir so build command run in current dir.
+      - docker tag AWS_ACC_ID.dkr.ecr.ap-south-1.amazonaws.com/my-images:latest AWS_ACC_ID.dkr.ecr.ap-south-1.amazonaws.com/my-images:latest    #tag the image with latest or whatever you want
+  post_build:
+    commands:
+      - docker push AWS_ACC_ID.dkr.ecr.ap-south-1.amazonaws.com/my-images:latest # push the image in ECR repo
+      - printf '[{"name":CONATINER_NAME,"imageUri":"%s"}]' AWS_ACC_ID.dkr.ecr.ap-south-1.amazonaws.com/my-images:latest > imagedefinitions.json  #print image definitions in json file
+artifacts:
+  files: imagedefinitions.json #store this file so that we can deploy 
